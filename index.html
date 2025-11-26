@@ -62,7 +62,7 @@
             }
             // 初始化3D妙蛙种子模型（左下角）
             initBulbasaur3D();
-            // 初始化漫画弹窗（修复版）
+            // 初始化漫画弹窗
             initComicModal();
         }
 
@@ -139,7 +139,7 @@
             });
         }
 
-        // --- 5. 漫画弹窗逻辑（完全重写，确保稳定性） ---
+        // --- 5. 漫画弹窗逻辑 ---
         function initComicModal() {
             const comicModal = document.getElementById('gpsoil-comic-modal');
             const showComicBtn = document.getElementById('show-gpsoil-comic');
@@ -147,59 +147,44 @@
             const loading = document.getElementById('comic-loading');
             const comicImg = document.getElementById('comic-main-image');
 
-            if (!comicModal || !showComicBtn || !closeComicBtn) {
-                console.warn("漫画弹窗组件缺失，请检查HTML ID");
-                return;
-            }
+            if (!comicModal || !showComicBtn || !closeComicBtn) return;
 
-            // 打开弹窗
+            // 打开弹窗逻辑
             showComicBtn.onclick = function(e) {
-                e.preventDefault(); // 阻止a标签默认跳转
+                // 阻止默认跳转行为，改为打开弹窗
+                e.preventDefault(); 
                 e.stopPropagation();
+                
                 comicModal.classList.remove('hidden');
                 comicModal.classList.add('flex');
-                document.body.style.overflow = 'hidden'; // 禁止背景滚动
-                if(loading) loading.classList.remove('hidden');
-                if(comicImg) comicImg.style.display = 'none'; // 图片加载前隐藏
+                document.body.style.overflow = 'hidden'; 
+                
+                // 重置加载状态
+                if(comicImg.style.display === 'none') {
+                    loading.classList.remove('hidden');
+                }
             };
 
-            // 关闭弹窗函数
+            // 关闭弹窗逻辑
             function closeModal() {
                 comicModal.classList.add('hidden');
                 comicModal.classList.remove('flex');
-                document.body.style.overflow = 'auto'; // 恢复滚动
+                document.body.style.overflow = 'auto'; 
             }
 
-            // 绑定关闭按钮
-            closeComicBtn.onclick = function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                closeModal();
-            };
+            closeComicBtn.onclick = (e) => { e.preventDefault(); closeModal(); };
+            comicModal.onclick = (e) => { if (e.target === comicModal) closeModal(); };
+            document.onkeydown = (e) => { if (e.key === "Escape") closeModal(); };
 
-            // 绑定点击遮罩关闭
-            comicModal.onclick = function(e) {
-                // 只有直接点击 modal 容器（遮罩）时才关闭，点击图片或内部元素不关闭
-                if (e.target === comicModal) {
-                    closeModal();
-                }
-            };
-
-            // 按 ESC 键关闭
-            document.onkeydown = function(e) {
-                if (e.key === "Escape" && !comicModal.classList.contains('hidden')) {
-                    closeModal();
-                }
-            };
-
-            // 图片加载处理
+            // 图片加载监听
             if (comicImg) {
                 comicImg.onload = function() {
-                    if(loading) loading.classList.add('hidden');
-                    comicImg.style.display = 'block'; // 加载完成后显示
+                    loading.classList.add('hidden');
+                    comicImg.style.display = 'block';
                 };
                 comicImg.onerror = function() {
-                    if(loading) loading.innerText = "Error loading image";
+                    // 如果CDN仍然拒绝，提供直接链接
+                    loading.innerHTML = '<div class="text-center text-white"><p class="mb-2">Preview unavailable.</p><a href="https://cdn.metaiot.group/metaiot/image/huixin/gpsoil.png" target="_blank" class="underline text-yellow-300">Click to open image</a></div>';
                 };
             }
         }
@@ -209,31 +194,26 @@
         @layer utilities {
             .text-shadow-sm { text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
             .scroll-mt-20 { scroll-margin-top: 5rem; }
-            /* 宝可梦配色变量 */
+            /* 配色变量 */
             .bg-bulbasaur-50 { background-color: #F0FDF4; }
-            .bg-bulbasaur-100 { background-color: #DCFCE7; }
             .bg-bulbasaur-700 { background-color: #3DA35D; }
             .text-bulbasaur-700 { color: #3DA35D; }
             .border-bulbasaur-200 { border-color: #A7F3D0; }
             .bg-squirtle-50 { background-color: #EFF6FF; }
-            .bg-squirtle-100 { background-color: #DBEAFE; }
             .bg-squirtle-700 { background-color: #1D4ED8; }
             .text-squirtle-700 { color: #1D4ED8; }
             .border-squirtle-200 { border-color: #BFDBFE; }
             
-            /* 毛玻璃核心样式 */
+            /* 毛玻璃 */
             .glass-panel {
                 background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(240, 253, 244, 0.3));
                 backdrop-filter: blur(25px);
-                -webkit-backdrop-filter: blur(25px);
                 border: 1px solid rgba(255, 255, 255, 0.3);
-                box-shadow: 0 8px 32px 0 rgba(61, 163, 93, 0.05);
             }
 
             .glass-card {
                 background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.5), rgba(239, 246, 255, 0.2));
                 backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
                 border: 1px solid rgba(255, 255, 255, 0.35);
                 box-shadow: 0 4px 20px rgba(0,0,0,0.03);
                 transition: all 0.3s ease;
@@ -242,67 +222,48 @@
                 background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.65), rgba(239, 246, 255, 0.35));
                 box-shadow: 0 8px 28px rgba(0,0,0,0.06);
                 transform: translateY(-2px);
-                border-color: rgba(255, 255, 255, 0.5);
             }
 
             .glass-sidebar {
                 background-image: linear-gradient(to bottom right, rgba(255, 255, 255, 0.45), rgba(240, 253, 244, 0.2));
                 backdrop-filter: blur(30px);
-                -webkit-backdrop-filter: blur(30px);
                 border: 1px solid rgba(255, 255, 255, 0.3);
-                box-shadow: 0 20px 40px rgba(61, 163, 93, 0.06);
             }
 
             .glass-btn-inactive {
                 background-image: linear-gradient(to bottom, rgba(255,255,255,0.4), rgba(240, 253, 244, 0.1));
                 backdrop-filter: blur(10px);
                 border: 1px solid rgba(255,255,255,0.3);
-                transition: all 0.2s;
             }
-            .glass-btn-inactive:hover {
-                background-image: linear-gradient(to bottom, rgba(255,255,255,0.6), rgba(240, 253, 244, 0.3));
-                border-color: rgba(255,255,255,0.5);
-            }
-            /* 底部进化3D模型布局样式 */
+
+            /* --- 3D模型样式去除边框阴影 --- */
             .evo-3d-container {
                 display: flex;
                 justify-content: center;
-                align-items: end; /* 底部对齐 */
-                gap: clamp(0.5rem, 2vw, 2rem); /* 减小模型间距 */
-                flex-wrap: wrap;
-                padding: 0.5rem 0; /* 减小内边距 */
+                align-items: flex-end;
+                gap: 2rem;
+                padding: 1rem 0;
                 width: 100%;
-                max-width: 1200px;
-                /* 关键：与主内容区对齐，实现右侧居中 */
-                margin: 0 0 0 clamp(320px, 22vw, 400px);
-                box-sizing: border-box;
+                background: transparent;
             }
             .evo-model {
-                flex: 1;
-                min-width: 200px; /* 缩小最小宽度 */
-                max-width: 300px; /* 缩小最大宽度 */
-                height: 280px !important; /* 统一模型高度 */
-                border-radius: 16px;
-                overflow: hidden;
-                box-shadow: 0 8px 24px rgba(61, 163, 93, 0.1);
-                transition: transform 0.3s ease;
+                width: 260px;
+                height: 260px;
+                box-shadow: none !important; 
+                background: transparent !important;
+                border: none !important;
+                cursor: grab;
             }
-            .evo-model:hover {
-                transform: translateY(-6px); /* 减小悬浮上移距离 */
+            .evo-model:focus {
+                outline: none; 
             }
-            /* Model-Viewer 3D模型样式适配 */
+            
             .pokemon-model-viewer {
                 width: 100%;
-                height: 260px; /* 缩小侧边栏模型高度 */
+                height: 260px;
                 border-radius: 16px;
-                margin-top: 1.2rem; /* 减小侧边栏模型上边距 */
-                overflow: hidden;
-                position: relative;
+                margin-top: 1.2rem;
             }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 
@@ -311,8 +272,6 @@
             scroll-behavior: smooth; 
             scroll-padding-top: 5rem; 
             font-size: clamp(16px, 0.6vw, 22px); 
-            overscroll-behavior-y: none; 
-            height: auto;
         }
 
         body {
@@ -326,12 +285,9 @@
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
-            overscroll-behavior-y: none;
             position: relative;
-            padding-bottom: 1rem; /* 减小页面底部内边距 */
         }
         
-        /* 导航链接下划线动效 */
         .nav-link { position: relative; font-size: 1.1rem !important; }
         .nav-link::after {
             content: ''; position: absolute; width: 0; height: 2px;
@@ -348,15 +304,12 @@
             height: calc(100vh - 6rem); 
             width: clamp(280px, 18vw, 360px);
             border-radius: 24px;
-            padding: clamp(1.2rem, 1.8vw, 2rem); /* 减小侧边栏内边距 */
+            padding: clamp(1.2rem, 1.8vw, 2rem);
             z-index: 40;
-            box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
             overflow-y: auto; 
             scrollbar-width: none; 
-            -ms-overflow-style: none;
         }
         .sidebar::-webkit-scrollbar { display: none; }
         
@@ -364,235 +317,134 @@
             flex: 0 0 auto;
             width: 100%; display: flex; flex-direction: column;
             align-items: center; text-align: center;
-            margin-bottom: 0.8rem; /* 减小侧边栏内部间距 */
+            margin-bottom: 0.8rem;
         }
         .sidebar-info { width: 100%; }
 
         .main-content {
             margin-left: clamp(320px, 22vw, 400px);
             flex-grow: 1;
-            padding: clamp(1.2rem, 1.8vw, 2rem); /* 减小主内容区内边距 */
+            padding: clamp(1.2rem, 1.8vw, 2rem);
             max-width: calc(100vw - clamp(320px, 22vw, 400px));
             box-sizing: border-box;
-            margin-bottom: 1rem; /* 减小主内容区与底部模型的间距 */
+            padding-bottom: 0;
         }
 
         /* 响应式适配 */
-        @media (max-width: 1200px) { 
-            .pub-grid, .award-grid { grid-template-columns: 1fr !important; gap: clamp(0.4rem, 0.8vw, 0.8rem) !important; }
-            .evo-3d-container { margin: 0 auto; } /* 移动端模型容器居中 */
-        }
         @media (max-width: 1024px) {
             .sidebar {
                 position: static; height: auto; width: 100%;
                 border-right: none; border-bottom: 1px solid #A7F3D0;
-                padding: clamp(1.2rem, 1.8vw, 1.8rem); /* 减小移动端侧边栏内边距 */
-                top: 4rem;
-                margin: 0;
-                border-radius: 0;
+                padding: clamp(1.2rem, 1.8vw, 1.8rem);
+                top: 4rem; margin: 0; border-radius: 0;
                 background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(240, 253, 244, 0.5)); 
                 overflow: visible; 
             }
-            .main-content { margin-left: 0; padding: clamp(1.2rem, 1.8vw, 1.8rem); max-width: 100vw; margin-bottom: 0.8rem; }
-            .sidebar-inner {
-                flex-direction: row; justify-content: center; align-items: center;
-                gap: clamp(1.2rem, 1.8vw, 1.8rem); max-width: 900px; margin: 0 auto;
-            }
+            .main-content { margin-left: 0; padding: clamp(1.2rem, 1.8vw, 1.8rem); max-width: 100vw; }
+            .sidebar-inner { flex-direction: row; justify-content: center; align-items: center; gap: 1.5rem; max-width: 900px; margin: 0 auto; }
             .sidebar-info { text-align: left; flex: 1; }
-            .sidebar-avatar { margin-bottom: 0 !important; }
-            /* 移动端3D模型缩小 */
-            #bulbasaur-3d-container {
-                width: 150px !important;
-                height: 150px !important;
-            }
-            /* 移动端Model-Viewer适配 */
-            .pokemon-model-viewer {
-                height: 220px;
-                margin-top: 0.8rem;
-                max-width: 80%;
-                margin-left: auto;
-                margin-right: auto;
-            }
-            /* 移动端进化3D模型高度适配 */
-            .evo-model {
-                height: 240px !important; /* 移动端统一模型高度 */
-                min-width: 180px;
+            #bulbasaur-3d-container { width: 150px !important; height: 150px !important; }
+            
+            /* 移动端页脚居中覆盖 */
+            .site-footer-container {
+                margin-left: 0 !important;
+                width: 100% !important;
             }
         }
         @media (max-width: 640px) {
-            .sidebar-inner { flex-direction: column; text-align: center; gap: clamp(0.8rem, 1.2vw, 1.2rem); }
+            .sidebar-inner { flex-direction: column; text-align: center; }
             .sidebar-info { text-align: center; }
-            .pub-grid, .award-grid { grid-template-columns: 1fr !important; gap: clamp(0.3rem, 0.6vw, 0.6rem) !important; }
-            .main-content { padding: clamp(0.8rem, 1.2vw, 1.2rem); }
-            .sidebar { padding: clamp(0.8rem, 1.2vw, 1.2rem); width: 100%; }
-            .pub-actions a { margin-left: 0.5rem !important; }
-            .mobile-nav-link { font-size: 1.1rem !important; }
-            .evo-slogan { font-size: 1.1rem !important; }
-            /* 移动端进化3D模型进一步适配 */
-            .evo-model {
-                height: 200px !important;
-                min-width: 160px;
-            }
-            /* 移动端侧边栏3D模型适配 */
-            .pokemon-model-viewer {
-                height: 180px;
-                max-width: 90%;
-            }
+            .pub-grid, .award-grid { grid-template-columns: 1fr !important; }
+            .evo-model { width: 180px; height: 180px; }
         }
 
-        /* 通用控件样式 */
-        .hidden { display: none; }
-        .pub-grid, .award-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(0.5rem, 1vw, 1rem); } /* 减小卡片间距 */
-
+        .pub-grid, .award-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(0.5rem, 1vw, 1rem); }
+        
         .pub-actions {
-            position: absolute; top: clamp(0.6rem, 0.8vw, 0.8rem); /* 减小论文操作区上边距 */
-            right: clamp(0.6rem, 0.8vw, 0.8rem); /* 减小论文操作区右边距 */
-            font-size: 1em; display: flex; align-items: center;
-            z-index: 10; /* 确保操作区在卡片内容之上 */
+            position: absolute; top: clamp(0.6rem, 0.8vw, 0.8rem);
+            right: clamp(0.6rem, 0.8vw, 0.8rem);
+            font-size: 1em; display: flex; align-items: center; z-index: 10;
         }
-        .pub-actions a { color: #86868b; transition: color 0.2s ease; margin-left: 0.8rem; text-decoration: none; cursor: pointer; } 
-        .pub-actions a:first-child { margin-left: 0; }
+        .pub-actions a { color: #86868b; transition: color 0.2s ease; margin-left: 0.8rem; cursor: pointer; text-decoration: none; }
         .pub-actions a:hover { color: #3DA35D; }
 
-        /* 字体大小规范化 */
-        h1 { font-size: 1.8rem !important; letter-spacing: -0.015em; }
-        h2 { font-size: 1.6rem !important; letter-spacing: -0.015em; }
-        h3 { font-size: 1.2rem !important; }
-        .text-sm { font-size: 0.95rem !important; }
-        .text-xs { font-size: 0.85rem !important; }
-        .text-[9px] { font-size: 0.75rem !important; }
-        button { font-size: 0.95rem !important; }
-        .mobile-nav-link { font-size: 1rem !important; }
-
-        /* 座右铭样式 */
-        .motto {
-            font-style: italic;
-            color: #1f2937;
-            border-left: 3px solid #3DA35D;
-            padding-left: 1rem;
-            margin: 1.2rem 0; /* 减小座右铭间距 */
+        /* 左下角模型容器 */
+        #bulbasaur-3d-container {
+            position: fixed; bottom: 2rem; left: 2rem;
+            width: 200px; height: 200px; z-index: 30;
+            border-radius: 50%; overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(61, 163, 93, 0.2);
+            display: flex; justify-content: center; align-items: center;
         }
 
-        /* 荣誉图标样式 */
-        .award-icon {
-            display: inline-flex;
-            align-items: center;
+        /* --- 页脚布局控制 --- */
+        .site-footer-container {
+            margin-left: clamp(320px, 22vw, 400px); /* 避开左侧侧边栏区域 */
+            width: auto; 
+            display: flex;
+            flex-direction: column;
+            align-items: center; 
             justify-content: center;
-            width: 1.5rem;
-            height: 1.5rem;
-            margin-right: 0.5rem;
+            padding-bottom: 2rem;
+            position: relative;
+            z-index: 1;
         }
-        /* 回到顶部按钮 */
-        #backToTop {
-            background-color: rgba(29, 78, 216, 0.9) !important;
-        }
-        #backToTop:hover {
-            background-color: rgba(29, 78, 216, 0.7) !important;
-            transform: scale(1.1);
-        }
-        /* 底部进化寓意区样式 - 核心修改：减小间距 */
-        .evo-footer {
-            padding: 0.5rem 1rem 1rem; /* 大幅减小顶部内边距，实现正文与模型紧凑衔接 */
-            text-align: center;
-            margin-top: 0; /* 移除顶部外边距 */
-            width: 100%;
-            box-sizing: border-box;
-        }
+
         .evo-slogan {
             font-weight: 600;
             color: #3DA35D;
             text-align: center;
-            margin: 0.8rem 0 0.3rem; /* 减小标语间距 */
+            margin: 1rem 0;
             font-style: italic;
-            font-size: 1.4rem; /* 缩小标语字体 */
-            text-shadow: 0 2px 3px rgba(61, 163, 93, 0.15);
-            letter-spacing: 0.5px;
+            font-size: 1.2rem;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
         }
-        /* 左下角3D模型容器 - 核心修改：强制居中 */
-        #bulbasaur-3d-container {
-            position: fixed;
-            bottom: 2rem;
-            left: 2rem;
-            width: 200px;
-            height: 200px;
-            z-index: 30;
-            border-radius: 50%;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(61, 163, 93, 0.2);
-            box-shadow: 0 4px 15px rgba(61, 163, 93, 0.1);
-            /* 关键：使用flex布局让内部内容居中 */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        /* 版权信息样式 */
+
         footer {
-            padding: 0.8rem 0 1.5rem; /* 减小版权区内边距 */
-            border-top: 1px solid rgba(61, 163, 93, 0.1);
-            margin-top: 0.5rem; /* 减小版权区上边距 */
-        }
-        /* 论文筛选按钮下方提示文字样式 */
-        .pub-tip-text {
-            font-size: 0.8rem;
+            text-align: center;
+            font-size: 0.85rem;
             color: #9ca3af;
-            margin-top: 0.3rem; /* 减小提示文字上边距 */
-            font-style: italic;
+            width: 100%;
         }
-        /* 章节标题间距减小 */
-        section h2 {
-            margin-bottom: 0.8rem !important; /* 减小标题与内容间距 */
-            padding-bottom: 0.5rem !important; /* 减小标题下划线间距 */
-        }
-        
-        /* --- 核心修复：漫画弹窗样式 --- */
+
+        /* 漫画弹窗样式 */
         #gpsoil-comic-modal {
-            z-index: 9999 !important; /* 最高层级，确保覆盖Header和3D模型 */
-            transition: opacity 0.3s ease;
+            z-index: 9999 !important; 
         }
         .comic-modal-content {
             position: relative;
             max-width: 95vw;
-            max-height: 95vh;
+            max-height: 90vh;
             display: flex;
             justify-content: center;
             align-items: center;
         }
         .comic-modal-img {
             max-width: 100%;
-            max-height: 90vh;
+            max-height: 85vh;
             object-fit: contain;
-            border-radius: 12px;
+            border-radius: 8px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
         .comic-close-btn {
             position: absolute;
-            top: -20px;
-            right: -20px;
-            background-color: white !important;
-            color: #3DA35D !important;
-            width: 40px;
-            height: 40px;
+            top: -15px;
+            right: -15px;
+            width: 36px;
+            height: 36px;
+            background: white;
+            color: #333;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             z-index: 10000;
             transition: transform 0.2s;
         }
-        .comic-close-btn:hover {
-            transform: scale(1.1);
-            background-color: #f0fdf4 !important;
-        }
-        /* 移动端调整关闭按钮位置 */
-        @media (max-width: 768px) {
-            .comic-close-btn {
-                top: 10px;
-                right: 10px;
-            }
-        }
+        .comic-close-btn:hover { transform: scale(1.1); }
     </style>
 </head>
 <body class="antialiased text-gray-800">
@@ -620,10 +472,10 @@
         </div>
         <div id="mobile-menu" class="hidden lg:hidden bg-white/95 backdrop-blur-xl border-b border-bulbasaur-200 shadow-lg absolute w-full left-0 top-16">
             <nav class="flex flex-col p-3 space-y-2">
-                <a href="#research" onclick="toggleMobileMenu()" class="block text-gray-700 hover:text-bulbasaur-700 hover:bg-bulbasaur-50 px-3 py-2 rounded-md font-medium mobile-nav-link">Overview</a>
-                <a href="#publications" onclick="toggleMobileMenu()" class="block text-gray-700 hover:text-bulbasaur-700 hover:bg-bulbasaur-50 px-3 py-2 rounded-md font-medium mobile-nav-link">Publications</a>
-                <a href="#awards" onclick="toggleMobileMenu()" class="block text-gray-700 hover:text-bulbasaur-700 hover:bg-bulbasaur-50 px-3 py-2 rounded-md font-medium mobile-nav-link">Awards</a>
-                <a href="#education" onclick="toggleMobileMenu()" class="block text-gray-700 hover:text-bulbasaur-700 hover:bg-bulbasaur-50 px-3 py-2 rounded-md font-medium mobile-nav-link">Education</a>
+                <a href="#research" onclick="toggleMobileMenu()" class="block text-gray-700 hover:text-bulbasaur-700 hover:bg-bulbasaur-50 px-3 py-2 rounded-md font-medium">Overview</a>
+                <a href="#publications" onclick="toggleMobileMenu()" class="block text-gray-700 hover:text-bulbasaur-700 hover:bg-bulbasaur-50 px-3 py-2 rounded-md font-medium">Publications</a>
+                <a href="#awards" onclick="toggleMobileMenu()" class="block text-gray-700 hover:text-bulbasaur-700 hover:bg-bulbasaur-50 px-3 py-2 rounded-md font-medium">Awards</a>
+                <a href="#education" onclick="toggleMobileMenu()" class="block text-gray-700 hover:text-bulbasaur-700 hover:bg-bulbasaur-50 px-3 py-2 rounded-md font-medium">Education</a>
             </nav>
         </div>
     </header>
@@ -631,12 +483,7 @@
     <aside class="sidebar glass-sidebar">
         <div class="sidebar-inner">
             <div class="sidebar-avatar mb-4 lg:mb-5">
-                <img 
-                    id="avatar-img"
-                    src="https://jingqilin.site/images/1.jpg" 
-                    alt="Jingqi Lin" 
-                    class="w-36 h-36 rounded-full border-4 border-bulbasaur-200 shadow-xl object-cover bg-gray-200"
-                >
+                <img id="avatar-img" src="https://jingqilin.site/images/1.jpg" alt="Jingqi Lin" class="w-36 h-36 rounded-full border-4 border-bulbasaur-200 shadow-xl object-cover bg-gray-200">
             </div>
             <div class="sidebar-info">
                 <h1 class="text-2xl font-bold text-gray-900 mb-2">Jingqi Lin <span class="text-base font-normal text-gray-500">(林静琦)</span></h1>
@@ -644,14 +491,14 @@
                 <div class="space-y-3 mb-4 text-sm text-gray-600">
                     <div class="flex items-center lg:justify-center justify-start">
                         <i class="fa fa-envelope text-bulbasaur-700 w-6 text-center mr-2"></i>
-                        <a href="mailto:jlindg@connect.ust.hk" class="hover:text-bulbasaur-700 hover:underline transition text-sm">jlindg [at] connect.ust.hk</a>
+                        <a href="mailto:jlindg@connect.ust.hk" class="hover:text-bulbasaur-700 hover:underline transition">jlindg [at] connect.ust.hk</a>
                     </div>
                     <div class="flex items-center lg:justify-center justify-start">
                         <i class="fa fa-map-marker text-bulbasaur-700 w-6 text-center mr-2"></i>
-                        <span class="text-sm">Hong Kong, China</span>
+                        <span>Hong Kong, China</span>
                     </div>
                 </div>
-                <p class="motto text-sm">Your wisdom will take you to all corners of the world.</p>
+                <p class="motto text-sm italic text-gray-700 border-l-4 border-bulbasaur-700 pl-3 my-4">Your wisdom will take you to all corners of the world.</p>
                 <div class="mb-4">
                     <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-3">Research Interests</h3>
                     <div class="flex flex-wrap gap-2 lg:justify-center justify-start">
@@ -660,30 +507,20 @@
                     </div>
                 </div>
                 <div class="flex space-x-4 lg:justify-center justify-start mt-3">
-                    <a href="https://scholar.google.com" target="_blank" class="text-gray-400 hover:text-bulbasaur-700 transition transform hover:scale-110" title="Google Scholar"><i class="fa fa-graduation-cap text-xl"></i></a>
-                    <a href="https://github.com" target="_blank" class="text-gray-400 hover:text-squirtle-700 transition transform hover:scale-110" title="GitHub"><i class="fa fa-github text-xl"></i></a>
-                    <a href="https://linkedin.com" target="_blank" class="text-gray-400 hover:text-squirtle-700 transition transform hover:scale-110" title="LinkedIn"><i class="fa fa-linkedin text-xl"></i></a>
+                    <a href="https://scholar.google.com" target="_blank" class="text-gray-400 hover:text-bulbasaur-700 transition transform hover:scale-110"><i class="fa fa-graduation-cap text-xl"></i></a>
+                    <a href="https://github.com" target="_blank" class="text-gray-400 hover:text-squirtle-700 transition transform hover:scale-110"><i class="fa fa-github text-xl"></i></a>
+                    <a href="https://linkedin.com" target="_blank" class="text-gray-400 hover:text-squirtle-700 transition transform hover:scale-110"><i class="fa fa-linkedin text-xl"></i></a>
                 </div>
             </div>
         </div>
-
         <div class="pokemon-model-viewer">
-            <model-viewer 
-                src="https://raw.githubusercontent.com/Sudhanshu-Ambastha/Pokemon-3D/main/models/glb/regular/1.glb" 
-                alt="妙蛙种子 3D 模型" 
-                auto-rotate 
-                camera-controls 
-                ar 
-                shadow-intensity="1"
-                background-color="transparent"> </model-viewer>
+            <model-viewer src="https://raw.githubusercontent.com/Sudhanshu-Ambastha/Pokemon-3D/main/models/glb/regular/1.glb" alt="Bulbasaur" auto-rotate camera-controls ar shadow-intensity="1" background-color="transparent"></model-viewer>
         </div>
     </aside>
 
     <main class="main-content">
         <section id="research" class="mb-4 scroll-mt-20">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b border-bulbasaur-200/50">
-                Overview
-            </h2>
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b border-bulbasaur-200/50">Overview</h2>
             <div class="glass-card rounded-2xl p-6">
                 <p class="text-gray-700 leading-relaxed text-justify text-base">
                     Hello! I’m Jingqi Lin (林静琦), a year-one PhD student in the research group led by Prof. <a href="https://www.cse.ust.hk/~qianzh/" class="text-bulbasaur-700 hover:underline" target="_blank">Qian Zhang</a> at the Department of Computer Science and Engineering, The Hong Kong University of Science and Technology (HKUST). Previously, I obtained my Bachelor’s degree in Communication Engineering from Huazhong University of Science and Technology (HUST), under the supervision of Prof. <a href="https://cs.whu.edu.cn/info/1019/55961.htm" class="text-bulbasaur-700 hover:underline" target="_blank">Wei Wang</a> in the MetaIoT Lab.
@@ -692,25 +529,20 @@
         </section>
 
         <section id="publications" class="mb-4 scroll-mt-20">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b border-bulbasaur-200/50">
-                Publications
-            </h2>
-            <div class="flex flex-col sm:flex-row justify-between items-end mb-3"> 
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b border-bulbasaur-200/50">Publications</h2>
+            <div class="flex flex-col sm:flex-row justify-between items-end mb-3">
                 <div class="flex flex-wrap gap-3 flex-col">
-                    <button id="btn-all" class="filter-btn bg-bulbasaur-700 text-white shadow-md px-4 py-2 rounded-full text-sm font-medium transition hover:opacity-90 backdrop-blur-sm w-fit" onclick="filterPublications('all')">All Publications</button>
-                    <p class="pub-tip-text">I will work harder to get more.</p>
-                </div>
-                <div class="text-xs text-gray-400 mt-2 sm:mt-0 italic tracking-wide">
-                    Note: ‘*’ marks equal contribution
+                    <button id="btn-all" class="filter-btn bg-bulbasaur-700 text-white shadow-md px-4 py-2 rounded-full text-sm font-medium transition w-fit" onclick="filterPublications('all')">All Publications</button>
+                    <p class="text-xs text-gray-400 italic">I will work harder to get more.</p>
                 </div>
             </div>
 
             <div class="pub-grid">
-                <div class="pub-card all glass-card card-hover rounded-xl p-5 border-l-4 border-l-bulbasaur-700 flex flex-col h-full relative">
+                <div class="pub-card all glass-card rounded-xl p-5 border-l-4 border-l-bulbasaur-700 flex flex-col h-full relative">
                     <div class="pub-actions">
-                        <a href="#" target="_blank"><i class="fa fa-file-pdf-o mr-1"></i> PDF</a>
-                        <a href="#" target="_blank"><i class="fa fa-link mr-1"></i> Conference</a>
-                        <a href="javascript:void(0)" id="show-gpsoil-comic" class="hover:text-bulbasaur-700 transition" title="View Explanation Comic">
+                        <a href="#" target="_blank" title="PDF"><i class="fa fa-file-pdf-o mr-1"></i> PDF</a>
+                        <a href="#" target="_blank" title="Conference"><i class="fa fa-link mr-1"></i> Conf</a>
+                        <a href="https://cdn.metaiot.group/metaiot/image/huixin/gpsoil.png" target="_blank" id="show-gpsoil-comic" class="text-bulbasaur-700 font-semibold" title="Explanation Comic">
                             <i class="fa fa-picture-o mr-1"></i> Comic
                         </a>
                     </div>
@@ -719,64 +551,44 @@
                     <p class="text-gray-500 text-xs mb-3">Huixin Dong, <strong>Jingqi Lin</strong>, Minhao Cui, Serene Zhang, Lili Qiu, Jie Xiong, Wei Wang</p>
                 </div>
 
-                <div class="pub-card all glass-card card-hover rounded-xl p-5 border-l-4 border-l-squirtle-700 flex flex-col h-full relative">
+                <div class="pub-card all glass-card rounded-xl p-5 border-l-4 border-l-squirtle-700 flex flex-col h-full relative">
                     <div class="pub-actions">
                         <a href="#" target="_blank"><i class="fa fa-file-pdf-o mr-1"></i> PDF</a>
-                        <a href="#" target="_blank"><i class="fa fa-link mr-1"></i> Conference</a>
+                        <a href="#" target="_blank"><i class="fa fa-link mr-1"></i> Conf</a>
                     </div>
                     <div class="mb-2"><span class="bg-squirtle-50/80 text-squirtle-700 border border-squirtle-200/50 px-2 py-1 rounded text-xs font-bold uppercase backdrop-blur-sm">ICNC 2025</span></div>
-                    <h3 class="text-sm font-bold text-gray-900 mb-2 leading-tight flex-grow pr-16">Rephrase and Contrast: Fine-Tuning Language Models for Enhanced Understanding of Communication and Computer Networks</h3>
+                    <h3 class="text-sm font-bold text-gray-900 mb-2 leading-tight flex-grow pr-16">Rephrase and Contrast: Fine-Tuning Language Models for Enhanced Understanding</h3>
                     <p class="text-gray-500 text-xs mb-3">Liujianfu Wang*, Yuyang Du*, <strong>Jingqi Lin</strong>*, Kexin Chen, Soung Chang Liew</p>
                 </div>
             </div>
         </section>
 
         <section id="awards" class="mb-4 scroll-mt-20">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b border-bulbasaur-200/50">
-                Honors & Awards
-            </h2>
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b border-bulbasaur-200/50">Honors & Awards</h2>
             <div class="award-grid">
                 <div class="glass-card rounded-xl p-3 flex items-center transition hover:shadow-md">
-                    <div class="bg-bulbasaur-50/60 text-bulbasaur-700 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0 backdrop-blur-sm"><i class="fa fa-trophy text-base"></i></div>
-                    <div>
-                        <h3 class="font-bold text-gray-900 text-sm">Outstanding Graduate, HUST</h3>
-                        <p class="text-gray-500 text-xs mt-1">2025 | Huazhong University of Science and Technology</p>
-                    </div>
+                    <div class="bg-bulbasaur-50/60 text-bulbasaur-700 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0 backdrop-blur-sm"><i class="fa fa-trophy"></i></div>
+                    <div><h3 class="font-bold text-gray-900 text-sm">Outstanding Graduate, HUST</h3><p class="text-gray-500 text-xs mt-1">2025</p></div>
                 </div>
                 <div class="glass-card rounded-xl p-3 flex items-center transition hover:shadow-md">
-                    <div class="bg-squirtle-50/60 text-squirtle-700 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0 backdrop-blur-sm"><i class="fa fa-money text-base"></i></div>
-                    <div>
-                        <h3 class="font-bold text-gray-900 text-sm">HUST Undergraduate Natural Science Innovation Fund</h3>
-                        <p class="text-gray-500 text-xs mt-1">2024 | Project Leader (¥50,000 Funding)</p>
-                    </div>
+                    <div class="bg-squirtle-50/60 text-squirtle-700 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0 backdrop-blur-sm"><i class="fa fa-money"></i></div>
+                    <div><h3 class="font-bold text-gray-900 text-sm">HUST Innovation Fund (¥50k)</h3><p class="text-gray-500 text-xs mt-1">2024</p></div>
                 </div>
-                <div class="glass-card rounded-xl p-3 flex items-center transition hover:shadow-md">
-                    <div class="bg-bulbasaur-50/60 text-bulbasaur-700 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0 backdrop-blur-sm"><i class="fa fa-flask text-base"></i></div>
-                    <div>
-                        <h3 class="font-bold text-gray-900 text-sm">Science and Technology Innovation Scholarship</h3>
-                        <p class="text-gray-500 text-xs mt-1">2024 | Huazhong University of Science and Technology</p>
-                    </div>
+                 <div class="glass-card rounded-xl p-3 flex items-center transition hover:shadow-md">
+                    <div class="bg-bulbasaur-50/60 text-bulbasaur-700 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0 backdrop-blur-sm"><i class="fa fa-flask"></i></div>
+                    <div><h3 class="font-bold text-gray-900 text-sm">Science & Tech Innovation Scholarship</h3><p class="text-gray-500 text-xs mt-1">2024</p></div>
                 </div>
-                <div class="glass-card rounded-xl p-3 flex items-center transition hover:shadow-md">
-                    <div class="bg-squirtle-50/60 text-squirtle-700 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0 backdrop-blur-sm"><i class="fa fa-graduation-cap text-base"></i></div>
-                    <div>
-                        <h3 class="font-bold text-gray-900 text-sm">Huawei Scholarship</h3>
-                        <p class="text-gray-500 text-xs mt-1">2023 | Huazhong University of Science and Technology</p>
-                    </div>
+                 <div class="glass-card rounded-xl p-3 flex items-center transition hover:shadow-md">
+                    <div class="bg-squirtle-50/60 text-squirtle-700 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0 backdrop-blur-sm"><i class="fa fa-graduation-cap"></i></div>
+                    <div><h3 class="font-bold text-gray-900 text-sm">Huawei Scholarship</h3><p class="text-gray-500 text-xs mt-1">2023</p></div>
                 </div>
-                <div class="glass-card rounded-xl p-3 flex items-center transition hover:shadow-md">
-                    <div class="bg-bulbasaur-50/60 text-bulbasaur-700 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0 backdrop-blur-sm"><i class="fa fa-bookmark text-base"></i></div>
-                    <div>
-                        <h3 class="font-bold text-gray-900 text-sm">National Scholarship</h3>
-                        <p class="text-gray-500 text-xs mt-1">2023 | Ministry of Education of China</p>
-                    </div>
+                 <div class="glass-card rounded-xl p-3 flex items-center transition hover:shadow-md">
+                    <div class="bg-bulbasaur-50/60 text-bulbasaur-700 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0 backdrop-blur-sm"><i class="fa fa-bookmark"></i></div>
+                    <div><h3 class="font-bold text-gray-900 text-sm">National Scholarship</h3><p class="text-gray-500 text-xs mt-1">2023</p></div>
                 </div>
-                <div class="glass-card rounded-xl p-3 flex items-center transition hover:shadow-md">
-                    <div class="bg-squirtle-50/60 text-squirtle-700 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0 backdrop-blur-sm"><i class="fa fa-star text-base"></i></div>
-                    <div>
-                        <h3 class="font-bold text-gray-900 text-sm">Merit Student, HUST</h3>
-                        <p class="text-gray-500 text-xs mt-1">2023 | Huazhong University of Science and Technology</p>
-                    </div>
+                 <div class="glass-card rounded-xl p-3 flex items-center transition hover:shadow-md">
+                    <div class="bg-squirtle-50/60 text-squirtle-700 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0 backdrop-blur-sm"><i class="fa fa-star"></i></div>
+                    <div><h3 class="font-bold text-gray-900 text-sm">Merit Student, HUST</h3><p class="text-gray-500 text-xs mt-1">2023</p></div>
                 </div>
                 <div class="glass-card rounded-xl p-3 flex items-center transition hover:shadow-md col-span-2">
                     <div class="bg-bulbasaur-50/60 text-bulbasaur-700 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0 backdrop-blur-sm"><i class="fa fa-star text-base"></i></div>
@@ -789,80 +601,47 @@
         </section>
 
         <section id="education" class="mb-2 scroll-mt-20">
-             <h2 class="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b border-bulbasaur-200/50">
-                Education
-            </h2>
+             <h2 class="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b border-bulbasaur-200/50">Education</h2>
             <div class="space-y-2">
                 <div class="flex flex-col md:flex-row gap-3 items-center">
-                    <div class="md:w-1/4 flex-shrink-0 text-left">
-                        <span class="font-mono text-sm font-semibold text-gray-600">2025 - Present</span>
-                    </div>
+                    <div class="md:w-1/4 flex-shrink-0 text-left"><span class="font-mono text-sm font-semibold text-gray-600">2025 - Present</span></div>
                     <div class="md:w-3/4 glass-card rounded-lg p-2.5 w-full border-l-2 border-bulbasaur-700">
-                        <h3 class="text-base font-bold text-gray-900 leading-snug">PhD Student in Computer Science and Engineering</h3>
-                        <div class="flex flex-col sm:flex-row sm:items-center mt-0.5 text-sm">
-                            <span class="text-bulbasaur-700 font-medium">The Hong Kong University of Science and Technology (HKUST)</span>
-                            <span class="hidden sm:inline mx-2 text-gray-400">|</span>
-                            <span class="text-gray-600">Supervised by Prof. Qian Zhang</span>
-                        </div>
+                        <h3 class="text-base font-bold text-gray-900">PhD Student in CSE</h3>
+                        <p class="text-sm text-gray-600">HKUST | Supervised by Prof. Qian Zhang</p>
                     </div>
                 </div>
                 <div class="flex flex-col md:flex-row gap-3 items-center">
-                    <div class="md:w-1/4 flex-shrink-0 text-left">
-                        <span class="font-mono text-sm font-semibold text-gray-600">2021 - 2025</span>
-                    </div>
+                    <div class="md:w-1/4 flex-shrink-0 text-left"><span class="font-mono text-sm font-semibold text-gray-600">2021 - 2025</span></div>
                     <div class="md:w-3/4 glass-card rounded-lg p-2.5 w-full border-l-2 border-squirtle-700">
-                        <h3 class="text-base font-bold text-gray-900 leading-snug">Bachelor of Engineering in Communication Engineering</h3>
-                        <div class="flex flex-col sm:flex-row sm:items-center mt-0.5 text-sm">
-                            <span class="text-squirtle-700 font-medium">Huazhong University of Science and Technology (HUST)</span>
-                            <span class="hidden sm:inline mx-2 text-gray-400">|</span>
-                            <span class="text-gray-600">Supervised by Prof. Wei Wang (MetaIoT Lab)</span>
-                        </div>
+                        <h3 class="text-base font-bold text-gray-900">B.Eng. in Communication Engineering</h3>
+                        <p class="text-sm text-gray-600">HUST | Supervised by Prof. Wei Wang</p>
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <div class="evo-footer">
+    <div class="site-footer-container">
         <div class="evo-3d-container">
-            <model-viewer class="evo-model"
-                src="https://raw.githubusercontent.com/Sudhanshu-Ambastha/Pokemon-3D/main/models/glb/regular/1.glb" 
-                alt="妙蛙种子 Bulbasaur"
-                auto-rotate camera-controls ar shadow-intensity="1"
-                background-color="transparent">
-            </model-viewer>
-            <model-viewer class="evo-model"
-                src="https://raw.githubusercontent.com/Sudhanshu-Ambastha/Pokemon-3D/main/models/glb/regular/2.glb" 
-                alt="妙蛙草 Ivysaur"
-                auto-rotate camera-controls ar shadow-intensity="1"
-                background-color="transparent">
-            </model-viewer>
-            <model-viewer class="evo-model"
-                src="https://raw.githubusercontent.com/Sudhanshu-Ambastha/Pokemon-3D/main/models/glb/regular/3.glb" 
-                alt="妙蛙花 Venusaur"
-                auto-rotate camera-controls ar shadow-intensity="1"
-                background-color="transparent">
-            </model-viewer>
+            <model-viewer class="evo-model" src="https://raw.githubusercontent.com/Sudhanshu-Ambastha/Pokemon-3D/main/models/glb/regular/1.glb" alt="Bulbasaur" auto-rotate camera-controls ar shadow-intensity="1"></model-viewer>
+            <model-viewer class="evo-model" src="https://raw.githubusercontent.com/Sudhanshu-Ambastha/Pokemon-3D/main/models/glb/regular/2.glb" alt="Ivysaur" auto-rotate camera-controls ar shadow-intensity="1"></model-viewer>
+            <model-viewer class="evo-model" src="https://raw.githubusercontent.com/Sudhanshu-Ambastha/Pokemon-3D/main/models/glb/regular/3.glb" alt="Venusaur" auto-rotate camera-controls ar shadow-intensity="1"></model-viewer>
         </div>
         <p class="evo-slogan">Jingqi Lin - Evolving towards the next form.</p>
+        
+        <footer>
+            <p>© 2025 Jingqi Lin. All rights reserved. <span class="mx-2 text-gray-300">|</span> Last updated: Nov. 26, 2025</p>
+        </footer>
     </div>
 
-    <footer class="mt-auto py-6 text-center text-sm text-gray-400">
-        <p>© 2025 Jingqi Lin. All rights reserved. <span class="mx-2 text-gray-300">|</span> Last updated: Nov. 26, 2025</p>
-    </footer>
-
-    <button id="backToTop" class="hidden fixed bottom-6 right-6 backdrop-blur-sm text-white w-12 h-12 rounded-full shadow-xl items-center justify-center transition z-50 transform hover:scale-110" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
-        <i class="fa fa-arrow-up text-xl"></i>
-    </button>
-
-    <div id="gpsoil-comic-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="gpsoil-comic-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="comic-modal-content" onclick="event.stopPropagation()">
-            <div id="comic-loading" class="absolute inset-0 flex items-center justify-center text-white text-lg font-bold">
+            <div id="comic-loading" class="absolute inset-0 flex items-center justify-center text-white text-lg">
                 <i class="fa fa-spinner fa-spin mr-2"></i> Loading...
             </div>
             
             <div id="close-comic-modal" class="comic-close-btn">
-                <i class="fa fa-times text-xl"></i>
+                <i class="fa fa-times text-lg"></i>
             </div>
             
             <img 
@@ -871,12 +650,16 @@
                 alt="GPSoil Explanation" 
                 class="comic-modal-img"
                 style="display: none;" 
+                referrerpolicy="no-referrer"
             >
         </div>
     </div>
     
+    <button id="backToTop" class="hidden fixed bottom-6 right-6 bg-squirtle-700 text-white w-12 h-12 rounded-full shadow-xl items-center justify-center z-50 hover:bg-squirtle-700/80" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <i class="fa fa-arrow-up"></i>
+    </button>
+    
     <script>
-        // 回到顶部按钮显隐
         window.addEventListener('scroll', () => {
             const btn = document.getElementById('backToTop');
             if (window.scrollY > 300) {
