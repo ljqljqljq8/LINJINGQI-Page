@@ -6,11 +6,15 @@
     <title>Jingqi Lin - Academic Homepage (Pokémon Theme)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.css" rel="stylesheet">
+
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <script nomodule src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -62,8 +66,8 @@
             }
             // 初始化3D妙蛙种子模型（左下角）
             initBulbasaur3D();
-            // 初始化漫画弹窗
-            initComicModal();
+            // 初始化漫画弹窗 (集成 Viewer.js)
+            initComicViewer();
         }
 
         // --- 4. 3D妙蛙种子模型初始化 ---
@@ -139,54 +143,59 @@
             });
         }
 
-        // --- 5. 漫画弹窗逻辑 ---
-        function initComicModal() {
-            const comicModal = document.getElementById('gpsoil-comic-modal');
+        // --- 5. 漫画查看器逻辑 (集成 Viewer.js) ---
+        function initComicViewer() {
             const showComicBtn = document.getElementById('show-gpsoil-comic');
-            const closeComicBtn = document.getElementById('close-comic-modal');
-            const loading = document.getElementById('comic-loading');
-            const comicImg = document.getElementById('comic-main-image');
+            const comicImage = document.getElementById('comic-main-image');
+            let viewer;
 
-            if (!comicModal || !showComicBtn || !closeComicBtn) return;
+            if (!showComicBtn || !comicImage) return;
 
-            // 打开弹窗逻辑
-            showComicBtn.onclick = function(e) {
-                // 阻止默认跳转行为，改为打开弹窗
+            showComicBtn.addEventListener('click', function(e) {
+                // 1. 阻止默认的链接跳转行为
                 e.preventDefault(); 
-                e.stopPropagation();
                 
-                comicModal.classList.remove('hidden');
-                comicModal.classList.add('flex');
-                document.body.style.overflow = 'hidden'; 
-                
-                // 重置加载状态
-                if(comicImg.style.display === 'none') {
-                    loading.classList.remove('hidden');
+                // 2. 初始化 Viewer (如果尚未初始化)
+                if (!viewer) {
+                    viewer = new Viewer(comicImage, {
+                        inline: false,  // 使用模态框模式（弹窗）
+                        button: true,   // 显示右上角关闭按钮
+                        navbar: false,  // 不需要缩略图导航条（仅单张图）
+                        title: false,   // 隐藏标题
+                        toolbar: {      // 自定义工具栏
+                            zoomIn: 1,
+                            zoomOut: 1,
+                            oneToOne: 1,
+                            reset: 1,
+                            prev: 0,    // 隐藏上一张
+                            play: 0,    // 隐藏播放
+                            next: 0,    // 隐藏下一张
+                            rotateLeft: 1,
+                            rotateRight: 1,
+                            flipHorizontal: 1,
+                            flipVertical: 1,
+                        },
+                        tooltip: true,
+                        movable: true,
+                        zoomable: true,
+                        rotatable: true,
+                        scalable: true,
+                        transition: true,
+                        fullscreen: true,
+                        keyboard: true,
+                        url: 'src', // 指定图片源
+                        backdrop: true, // 显示遮罩层背景
+                        // 关闭后销毁实例，确保下次打开重新初始化，避免状态缓存问题
+                        hidden: function () {
+                            viewer.destroy();
+                            viewer = null;
+                        },
+                    });
                 }
-            };
-
-            // 关闭弹窗逻辑
-            function closeModal() {
-                comicModal.classList.add('hidden');
-                comicModal.classList.remove('flex');
-                document.body.style.overflow = 'auto'; 
-            }
-
-            closeComicBtn.onclick = (e) => { e.preventDefault(); closeModal(); };
-            comicModal.onclick = (e) => { if (e.target === comicModal) closeModal(); };
-            document.onkeydown = (e) => { if (e.key === "Escape") closeModal(); };
-
-            // 图片加载监听
-            if (comicImg) {
-                comicImg.onload = function() {
-                    loading.classList.add('hidden');
-                    comicImg.style.display = 'block';
-                };
-                comicImg.onerror = function() {
-                    // 如果CDN仍然拒绝，提供直接链接
-                    loading.innerHTML = '<div class="text-center text-white"><p class="mb-2">Preview unavailable.</p><a href="https://cdn.metaiot.group/metaiot/image/huixin/gpsoil.png" target="_blank" class="underline text-yellow-300">Click to open image</a></div>';
-                };
-            }
+                
+                // 3. 显式调用显示方法
+                viewer.show();
+            });
         }
     </script>
 
@@ -408,43 +417,10 @@
             width: 100%;
         }
 
-        /* 漫画弹窗样式 */
-        #gpsoil-comic-modal {
-            z-index: 9999 !important; 
+        /* Viewer.js 样式微调，确保层级正确 */
+        .viewer-container {
+            z-index: 9999 !important;
         }
-        .comic-modal-content {
-            position: relative;
-            max-width: 95vw;
-            max-height: 90vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .comic-modal-img {
-            max-width: 100%;
-            max-height: 85vh;
-            object-fit: contain;
-            border-radius: 8px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-        .comic-close-btn {
-            position: absolute;
-            top: -15px;
-            right: -15px;
-            width: 36px;
-            height: 36px;
-            background: white;
-            color: #333;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 10000;
-            transition: transform 0.2s;
-        }
-        .comic-close-btn:hover { transform: scale(1.1); }
     </style>
 </head>
 <body class="antialiased text-gray-800">
@@ -542,7 +518,11 @@
                     <div class="pub-actions">
                         <a href="#" target="_blank" title="PDF"><i class="fa fa-file-pdf-o mr-1"></i> PDF</a>
                         <a href="#" target="_blank" title="Conference"><i class="fa fa-link mr-1"></i> Conf</a>
-                        <a href="https://cdn.metaiot.group/metaiot/image/huixin/gpsoil.png" target="_blank" id="show-gpsoil-comic" class="text-bulbasaur-700 font-semibold" title="Explanation Comic">
+                        <a href="https://cdn.metaiot.group/metaiot/image/huixin/gpsoil.jpg" 
+                           target="_blank" 
+                           id="show-gpsoil-comic" 
+                           class="text-bulbasaur-700 font-semibold" 
+                           title="Explanation Comic">
                             <i class="fa fa-picture-o mr-1"></i> Comic
                         </a>
                     </div>
@@ -634,25 +614,13 @@
         </footer>
     </div>
 
-    <div id="gpsoil-comic-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="comic-modal-content" onclick="event.stopPropagation()">
-            <div id="comic-loading" class="absolute inset-0 flex items-center justify-center text-white text-lg">
-                <i class="fa fa-spinner fa-spin mr-2"></i> Loading...
-            </div>
-            
-            <div id="close-comic-modal" class="comic-close-btn">
-                <i class="fa fa-times text-lg"></i>
-            </div>
-            
-            <img 
-                id="comic-main-image"
-                src="https://cdn.metaiot.group/metaiot/image/huixin/gpsoil.png" 
-                alt="GPSoil Explanation" 
-                class="comic-modal-img"
-                style="display: none;" 
-                referrerpolicy="no-referrer"
-            >
-        </div>
+    <div id="comic-viewer-container" class="hidden">
+        <img 
+            id="comic-main-image"
+            src="https://cdn.metaiot.group/metaiot/image/huixin/gpsoil.jpg" 
+            alt="GPSoil Explanation" 
+            referrerpolicy="no-referrer"
+        >
     </div>
     
     <button id="backToTop" class="hidden fixed bottom-6 right-6 bg-squirtle-700 text-white w-12 h-12 rounded-full shadow-xl items-center justify-center z-50 hover:bg-squirtle-700/80" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
