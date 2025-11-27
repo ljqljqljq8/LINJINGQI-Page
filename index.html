@@ -7,13 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     
+    <!-- 1. 引入 Viewer.js 的 CSS (用于图片查看器) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.css" rel="stylesheet">
 
+    <!-- 恢复原有的 Three.js 版本以保证排版兼容性 -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <script nomodule src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.min.js"></script>
+    <!-- 引入 Viewer.js JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.11.6/viewer.min.js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,10 +24,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 
     <script>
-        // 头像加载失败的兜底SVG
         const fallbackAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTMyIiBoZWlnaHQ9IjEzMiIgdmlld0JveD0iMCAwIDEzMiAxMzIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNjYiIGN5PSI0NSIgcj0iMzAiIGZpbGw9IiMxRTNBOEEiLz48dGV4dCB4PSI2NiIgeT0iODUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iI0ZGRiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zNWUiPkxpbjwvdGV4dD48L3N2Zz4=';
 
-        // --- 1. 论文筛选功能 ---
         function filterPublications(type) {
             const cards = document.querySelectorAll('.pub-card');
             cards.forEach(card => {
@@ -48,15 +49,13 @@
             }
         }
 
-        // --- 2. 移动端菜单切换 ---
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
             menu.classList.toggle('hidden');
         }
 
-        // --- 3. 页面初始化 ---
         window.onload = function() {
-            filterPublications('all'); // 默认显示所有论文
+            filterPublications('all');
             const avatarImg = document.getElementById('avatar-img');
             if(avatarImg) {
                 avatarImg.addEventListener('error', function() {
@@ -64,13 +63,10 @@
                     this.src = fallbackAvatar; 
                 });
             }
-            // 初始化3D妙蛙种子模型（左下角）
-            initBulbasaur3D();
-            // 初始化漫画弹窗 (集成 Viewer.js)
+            // initBulbasaur3D(); // 已移除左下角 3D 模型
             initComicViewer();
         }
 
-        // --- 4. 3D妙蛙种子模型初始化 ---
         let scene, camera, renderer, controls, bulbasaurModel;
         function initBulbasaur3D() {
             const container = document.getElementById('bulbasaur-3d-container');
@@ -143,59 +139,68 @@
             });
         }
 
-        // --- 5. 漫画查看器逻辑 (集成 Viewer.js) ---
+        // --- Viewer.js 初始化 (修复版) ---
         function initComicViewer() {
-            const showComicBtn = document.getElementById('show-gpsoil-comic');
+            const showComicArea = document.getElementById('gpsoil-fold-corner');
+            const showComicBtn = document.getElementById('show-gpsoil-comic-btn');
             const comicImage = document.getElementById('comic-main-image');
-            let viewer;
+            let comicViewerInstance; // 重命名变量以避免冲突
 
-            if (!showComicBtn || !comicImage) return;
-
-            showComicBtn.addEventListener('click', function(e) {
-                // 1. 阻止默认的链接跳转行为
-                e.preventDefault(); 
+            const openViewer = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 
-                // 2. 初始化 Viewer (如果尚未初始化)
-                if (!viewer) {
-                    viewer = new Viewer(comicImage, {
-                        inline: false,  // 使用模态框模式（弹窗）
-                        button: true,   // 显示右上角关闭按钮
-                        navbar: false,  // 不需要缩略图导航条（仅单张图）
-                        title: false,   // 隐藏标题
-                        toolbar: {      // 自定义工具栏
-                            zoomIn: 1,
-                            zoomOut: 1,
-                            oneToOne: 1,
-                            reset: 1,
-                            prev: 0,    // 隐藏上一张
-                            play: 0,    // 隐藏播放
-                            next: 0,    // 隐藏下一张
-                            rotateLeft: 1,
-                            rotateRight: 1,
-                            flipHorizontal: 1,
-                            flipVertical: 1,
+                if (!comicImage) return;
+
+                if (!comicViewerInstance) {
+                    comicViewerInstance = new Viewer(comicImage, {
+                        inline: false,
+                        button: true,
+                        navbar: false,
+                        title: false,
+                        toolbar: {
+                            zoomIn: 1, zoomOut: 1, oneToOne: 1, reset: 1,
+                            rotateLeft: 1, rotateRight: 1, flipHorizontal: 1, flipVertical: 1,
                         },
-                        tooltip: true,
-                        movable: true,
-                        zoomable: true,
-                        rotatable: true,
-                        scalable: true,
-                        transition: true,
-                        fullscreen: true,
-                        keyboard: true,
-                        url: 'src', // 指定图片源
-                        backdrop: true, // 显示遮罩层背景
-                        // 关闭后销毁实例，确保下次打开重新初始化，避免状态缓存问题
+                        tooltip: true, movable: true, zoomable: true, rotatable: true, scalable: true,
+                        transition: true, fullscreen: true, keyboard: true,
+                        backdrop: true,
+                        
+                        // 关键修复：使用 setTimeout 确保实例赋值完成，避免 getImageData 报错
+                        viewed: function() {
+                            setTimeout(() => {
+                                const v = comicViewerInstance;
+                                if (!v) return;
+                                
+                                // 1. 缩放至 40%
+                                v.zoomTo(0.4);
+                                
+                                // 2. 移动至顶端
+                                // 检查 getImageData 方法是否存在，或直接使用 imageData 属性
+                                let imgData = null;
+                                if (typeof v.getImageData === 'function') {
+                                    imgData = v.getImageData();
+                                } else if (v.imageData) {
+                                    imgData = v.imageData;
+                                }
+
+                                if (imgData) {
+                                    v.moveTo(imgData.x, 0); // 保持 X 轴，Y 轴置顶
+                                }
+                            }, 0);
+                        },
+
                         hidden: function () {
-                            viewer.destroy();
-                            viewer = null;
+                            comicViewerInstance.destroy();
+                            comicViewerInstance = null;
                         },
                     });
                 }
-                
-                // 3. 显式调用显示方法
-                viewer.show();
-            });
+                comicViewerInstance.show();
+            };
+
+            if (showComicArea) showComicArea.addEventListener('click', openViewer);
+            if (showComicBtn) showComicBtn.addEventListener('click', openViewer);
         }
     </script>
 
@@ -203,7 +208,6 @@
         @layer utilities {
             .text-shadow-sm { text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
             .scroll-mt-20 { scroll-margin-top: 5rem; }
-            /* 配色变量 */
             .bg-bulbasaur-50 { background-color: #F0FDF4; }
             .bg-bulbasaur-700 { background-color: #3DA35D; }
             .text-bulbasaur-700 { color: #3DA35D; }
@@ -213,7 +217,6 @@
             .text-squirtle-700 { color: #1D4ED8; }
             .border-squirtle-200 { border-color: #BFDBFE; }
             
-            /* 毛玻璃 */
             .glass-panel {
                 background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(240, 253, 244, 0.3));
                 backdrop-filter: blur(25px);
@@ -245,7 +248,6 @@
                 border: 1px solid rgba(255,255,255,0.3);
             }
 
-            /* --- 3D模型样式去除边框阴影 --- */
             .evo-3d-container {
                 display: flex;
                 justify-content: center;
@@ -263,15 +265,98 @@
                 border: none !important;
                 cursor: grab;
             }
-            .evo-model:focus {
-                outline: none; 
-            }
+            .evo-model:focus { outline: none; }
             
             .pokemon-model-viewer {
                 width: 100%;
                 height: 260px;
                 border-radius: 16px;
                 margin-top: 1.2rem;
+            }
+
+            /* 折页效果 CSS */
+            .paper-fold-container {
+                position: relative;
+                overflow: hidden; 
+            }
+            
+            .fold-corner-area {
+                position: absolute;
+                bottom: 0;
+                right: 0;
+                width: 90px;
+                height: 90px;
+                z-index: 20;
+                cursor: pointer;
+                clip-path: polygon(0 100%, 100% 0, 100% 100%);
+                transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+                box-shadow: -5px -5px 15px rgba(0,0,0,0.1);
+            }
+
+            .fold-corner-img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                position: absolute;
+                top: 0;
+                left: 0;
+                transform: scale(1.3) translate(-10%, -10%); 
+            }
+
+            .fold-glass-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 21;
+                backdrop-filter: blur(3px); 
+                -webkit-backdrop-filter: blur(3px);
+                background-image: 
+                    radial-gradient(circle, rgba(255, 255, 255, 0.7) 1px, transparent 1px),
+                    linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.4) 100%);
+                background-size: 4px 4px, 100% 100%;
+                opacity: 0.9;
+                transition: opacity 0.3s ease;
+            }
+
+            .fold-crease {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 200%;
+                height: 1px;
+                background: rgba(255, 255, 255, 0.6);
+                transform: rotate(45deg);
+                transform-origin: 0 0;
+                z-index: 22;
+            }
+
+            .paper-fold-container:hover .fold-corner-area {
+                width: 105px;
+                height: 105px;
+            }
+            
+            .fold-corner-area:hover .fold-glass-overlay {
+                opacity: 0;
+                backdrop-filter: blur(0);
+            }
+
+            .fold-hint {
+                position: absolute;
+                bottom: 8px;
+                right: 8px;
+                font-size: 10px;
+                color: white;
+                z-index: 23;
+                opacity: 0;
+                font-weight: bold;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+                pointer-events: none;
+                transition: opacity 0.3s;
+            }
+            .fold-corner-area:hover .fold-hint {
+                opacity: 1;
             }
         }
     </style>
@@ -305,47 +390,28 @@
         }
         .nav-link:hover::after { width: 100%; }
 
-        /* 侧边栏布局 */
         .sidebar {
-            position: fixed; 
-            top: 5rem; 
-            left: clamp(1rem, 2vw, 2rem); 
-            height: calc(100vh - 6rem); 
-            width: clamp(280px, 18vw, 360px);
-            border-radius: 24px;
-            padding: clamp(1.2rem, 1.8vw, 2rem);
-            z-index: 40;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto; 
-            scrollbar-width: none; 
+            position: fixed; top: 5rem; left: clamp(1rem, 2vw, 2rem); 
+            height: calc(100vh - 6rem); width: clamp(280px, 18vw, 360px);
+            border-radius: 24px; padding: clamp(1.2rem, 1.8vw, 2rem); z-index: 40;
+            display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: none; 
         }
         .sidebar::-webkit-scrollbar { display: none; }
         
-        .sidebar-inner {
-            flex: 0 0 auto;
-            width: 100%; display: flex; flex-direction: column;
-            align-items: center; text-align: center;
-            margin-bottom: 0.8rem;
-        }
+        .sidebar-inner { flex: 0 0 auto; width: 100%; display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 0.8rem; }
         .sidebar-info { width: 100%; }
 
         .main-content {
             margin-left: clamp(320px, 22vw, 400px);
-            flex-grow: 1;
-            padding: clamp(1.2rem, 1.8vw, 2rem);
+            flex-grow: 1; padding: clamp(1.2rem, 1.8vw, 2rem);
             max-width: calc(100vw - clamp(320px, 22vw, 400px));
-            box-sizing: border-box;
-            padding-bottom: 0;
+            box-sizing: border-box; padding-bottom: 0;
         }
 
-        /* 响应式适配 */
         @media (max-width: 1024px) {
             .sidebar {
-                position: static; height: auto; width: 100%;
-                border-right: none; border-bottom: 1px solid #A7F3D0;
-                padding: clamp(1.2rem, 1.8vw, 1.8rem);
-                top: 4rem; margin: 0; border-radius: 0;
+                position: static; height: auto; width: 100%; border-right: none; border-bottom: 1px solid #A7F3D0;
+                padding: clamp(1.2rem, 1.8vw, 1.8rem); top: 4rem; margin: 0; border-radius: 0;
                 background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(240, 253, 244, 0.5)); 
                 overflow: visible; 
             }
@@ -353,12 +419,7 @@
             .sidebar-inner { flex-direction: row; justify-content: center; align-items: center; gap: 1.5rem; max-width: 900px; margin: 0 auto; }
             .sidebar-info { text-align: left; flex: 1; }
             #bulbasaur-3d-container { width: 150px !important; height: 150px !important; }
-            
-            /* 移动端页脚居中覆盖 */
-            .site-footer-container {
-                margin-left: 0 !important;
-                width: 100% !important;
-            }
+            .site-footer-container { margin-left: 0 !important; width: 100% !important; }
         }
         @media (max-width: 640px) {
             .sidebar-inner { flex-direction: column; text-align: center; }
@@ -377,7 +438,6 @@
         .pub-actions a { color: #86868b; transition: color 0.2s ease; margin-left: 0.8rem; cursor: pointer; text-decoration: none; }
         .pub-actions a:hover { color: #3DA35D; }
 
-        /* 左下角模型容器 */
         #bulbasaur-3d-container {
             position: fixed; bottom: 2rem; left: 2rem;
             width: 200px; height: 200px; z-index: 30;
@@ -387,44 +447,26 @@
             display: flex; justify-content: center; align-items: center;
         }
 
-        /* --- 页脚布局控制 --- */
         .site-footer-container {
-            margin-left: clamp(320px, 22vw, 400px); /* 避开左侧侧边栏区域 */
-            width: auto; 
-            display: flex;
-            flex-direction: column;
-            align-items: center; 
-            justify-content: center;
-            padding-bottom: 2rem;
-            position: relative;
-            z-index: 1;
+            margin-left: clamp(320px, 22vw, 400px); width: auto; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding-bottom: 2rem; position: relative; z-index: 1;
         }
 
         .evo-slogan {
-            font-weight: 600;
-            color: #3DA35D;
-            text-align: center;
-            margin: 1rem 0;
-            font-style: italic;
-            font-size: 1.2rem;
-            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+            font-weight: 600; color: #3DA35D; text-align: center; margin: 1rem 0;
+            font-style: italic; font-size: 1.2rem; text-shadow: 0 1px 2px rgba(255,255,255,0.8);
         }
 
-        footer {
-            text-align: center;
-            font-size: 0.85rem;
-            color: #9ca3af;
-            width: 100%;
-        }
-
-        /* Viewer.js 样式微调，确保层级正确 */
-        .viewer-container {
-            z-index: 9999 !important;
-        }
+        footer { text-align: center; font-size: 0.85rem; color: #9ca3af; width: 100%; }
+        
+        /* 确保 Viewer.js 弹窗层级最高 */
+        .viewer-container { z-index: 9999 !important; }
     </style>
 </head>
 <body class="antialiased text-gray-800">
-    <div id="bulbasaur-3d-container" class="hidden md:block"></div>
+    <!-- 移除顶部的 3D 模型容器 -->
+    <!-- <div id="bulbasaur-3d-container" class="hidden md:block"></div> -->
 
     <header class="fixed top-0 left-0 right-0 h-16 glass-panel z-50 border-b-0">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 h-full">
@@ -514,18 +556,27 @@
             </div>
 
             <div class="pub-grid">
-                <div class="pub-card all glass-card rounded-xl p-5 border-l-4 border-l-bulbasaur-700 flex flex-col h-full relative">
+                <!-- GPSoil Paper with Fold Effect -->
+                <div class="pub-card all glass-card rounded-xl p-5 border-l-4 border-l-bulbasaur-700 flex flex-col h-full relative paper-fold-container">
                     <div class="pub-actions">
-                        <a href="#" target="_blank" title="PDF"><i class="fa fa-file-pdf-o mr-1"></i> PDF</a>
+                        <!-- 修正后的 GPSoil PDF 链接 -->
+                        <a href="https://dl.acm.org/doi/10.1145/3680207.3765236" target="_blank" title="PDF"><i class="fa fa-file-pdf-o mr-1"></i> PDF</a>
                         <a href="#" target="_blank" title="Conference"><i class="fa fa-link mr-1"></i> Conf</a>
-                        <a href="https://cdn.metaiot.group/metaiot/image/huixin/gpsoil.jpg" 
-                           target="_blank" 
-                           id="show-gpsoil-comic" 
-                           class="text-bulbasaur-700 font-semibold" 
-                           title="Explanation Comic">
-                            <i class="fa fa-picture-o mr-1"></i> Comic
-                        </a>
+                        <a href="#" id="show-gpsoil-comic-btn" class="text-bulbasaur-700 font-semibold" title="Explanation Comic"><i class="fa fa-picture-o mr-1"></i> Comic</a>
                     </div>
+                    
+                    <!-- 折角缩略图区域 (触发 Viewer.js) -->
+                    <div id="gpsoil-fold-corner" class="fold-corner-area" title="Click to view comic">
+                        <!-- 缩略图 -->
+                        <img src="https://th.bing.com/th/id/OIP.wI6Ej3W65UKejzMzdR94RAHaEo?w=248&h=180&c=7&r=0&o=7&dpr=1.5&pid=1.7&rm=3" alt="Comic Preview" class="fold-corner-img">
+                        <!-- 粒子/毛玻璃遮罩层 -->
+                        <div class="fold-glass-overlay"></div>
+                        <!-- 折痕线 -->
+                        <div class="fold-crease"></div>
+                        <!-- 提示 -->
+                        <div class="fold-hint">View Comic</div>
+                    </div>
+
                     <div class="mb-2"><span class="bg-bulbasaur-50/80 text-bulbasaur-700 border border-bulbasaur-200/50 px-2 py-1 rounded text-xs font-bold uppercase backdrop-blur-sm">MobiCom 2025 (CCF A)</span></div>
                     <h3 class="text-sm font-bold text-gray-900 mb-2 leading-tight flex-grow pr-16">GPSoil: Towards low-cost soil moisture sensing using GNSS signals</h3>
                     <p class="text-gray-500 text-xs mb-3">Huixin Dong, <strong>Jingqi Lin</strong>, Minhao Cui, Serene Zhang, Lili Qiu, Jie Xiong, Wei Wang</p>
@@ -533,7 +584,8 @@
 
                 <div class="pub-card all glass-card rounded-xl p-5 border-l-4 border-l-squirtle-700 flex flex-col h-full relative">
                     <div class="pub-actions">
-                        <a href="#" target="_blank"><i class="fa fa-file-pdf-o mr-1"></i> PDF</a>
+                        <!-- 修正后的 Rephrase 论文 PDF 链接 -->
+                        <a href="https://arxiv.org/abs/2409.19007" target="_blank"><i class="fa fa-file-pdf-o mr-1"></i> PDF</a>
                         <a href="#" target="_blank"><i class="fa fa-link mr-1"></i> Conf</a>
                     </div>
                     <div class="mb-2"><span class="bg-squirtle-50/80 text-squirtle-700 border border-squirtle-200/50 px-2 py-1 rounded text-xs font-bold uppercase backdrop-blur-sm">ICNC 2025</span></div>
